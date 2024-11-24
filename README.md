@@ -1,2 +1,2 @@
 # asl-workflow-typescript
-A developer-centric library for constructing Amazon States Languages workflows.
+A library for constructing Amazon States Languages workflows in a developer-centric way.
