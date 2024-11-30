@@ -1,15 +1,29 @@
 import {WorkflowIf} from "./WorkflowIf";
 import {WorkflowRetryCatch} from "./WorkflowRetryCatch";
+import StateMachine from "../asl-model/StateMachine";
+import PassState from "../asl-model/PassState";
+import AslState from "../asl-model/AslState";
+import {isValidVariableName} from "../asl-model/utils";
+import {InvalidName} from "../asl-model/errors";
 
 type ConstantOrJsonata = number | string | boolean | object | any[] ;
 type StringOrJsonata = string;
 
 export class Workflow {
+
+    constructor(private stateMachine: StateMachine) {}
+
     public assign(varName: string, constOrJsonata: ConstantOrJsonata): void {
-        console.log("Assigning to " + varName + " " + typeof constOrJsonata);
-        if (typeof constOrJsonata === "object") {
-            console.log("Type is " + constOrJsonata.constructor.name);
+        if (!isValidVariableName(varName)) {
+            throw new InvalidName(`Variable '${varName}' is not a valid variable name`)
         }
+
+        // TODO: error checks for input type
+        // TODO: validate JSONata.
+        const passState = new PassState(this.stateMachine.nextStateName)
+        passState.assign = {}
+        passState.assign[varName] = constOrJsonata
+        this.chainStateAtEnd(passState)
     }
 
     public if(jsonataExpression: string | boolean): WorkflowIf {
@@ -35,13 +49,14 @@ export class Workflow {
     }
 
     /**
-     * Exit successfully from the current workflow (or nested workflow) and return the specified value. If called
-     * from the main workflow, the entire execution will complete successfully. If called from a nested workflow
-     * within a map or parallel operation, only that portion of the execution will complete, with the return value
-     * used as that branches result.
+     * Exit successfully from the current workflow (or nested workflow) and return the specified value. This method
+     * only makes sense in the top-level workflow, or at the top-level of an include block.
+     *
      * @param value A constant JSON value (number, string, etc), or a JSONata expression.
      */
     public return(value: ConstantOrJsonata): void {
+        // TODO: it's an error if this isn't the last command in the block, or it's appears anywhere except
+        // for the top-level workflow, or at the top-level of an include block.
     }
 
     // Fail state
@@ -49,10 +64,36 @@ export class Workflow {
     public fail(error: StringOrJsonata, cause: StringOrJsonata): void {
     }
 
-    public expr(value: ConstantOrJsonata) :void {
-
+    /**
+     * Output a constant value, or the result of a JSONata expression, as the result of the enclosing block
+     * (main workflow code, if/else block, within a map or parallel etc. This method can only be at the very
+     * end of the block, otherwise the result is discarded.
+     *
+     * @param value A JSON constant, or JSONata expression to evaluate.
+     */
+    public expr(value: ConstantOrJsonata): void {
+        // TODO: it's an error if this isn't the last command in the block.
+        const passState = new PassState(this.stateMachine.nextStateName)
+        passState.output = {}
+        passState.output = value
+        this.chainStateAtEnd(passState)
     }
 
+    /**
+     * Helper for adding a new state to the state machine, then appending it to the end of
+     * the current flow.
+     *
+     * @param state New state to be appended to the end.
+     */
+    private chainStateAtEnd(state: AslState) {
+        const lastState = this.stateMachine.getLastState();
+        this.stateMachine.addChildState(state)
+        if (lastState === undefined) {
+            this.stateMachine.startState = state;
+        } else {
+            lastState.next = state;
+        }
+    }
     // TODO: label
     // TODO: while/break/continue
     // TODO: switch

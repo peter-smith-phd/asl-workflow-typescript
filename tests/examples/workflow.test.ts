@@ -1,4 +1,4 @@
-import {WorkflowBuilder, Workflow, jsonataTag as j} from "../src/asl-workflow";
+import {WorkflowBuilder, Workflow, jsonataTag as j} from "../../src/asl-workflow";
 
 function helper(w : Workflow): void {
     w.assign("a", 5);
