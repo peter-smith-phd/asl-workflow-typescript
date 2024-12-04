@@ -1,5 +1,5 @@
 import StateMachine from "../../src/asl-model/StateMachine";
-import {AlreadyExistsError, InvalidName, MissingFieldError} from "../../src/asl-model/errors";
+import {AlreadyExistsError, MissingFieldError} from "../../src/asl-model/errors";
 import PassState from "../../src/asl-model/PassState";
 
 
@@ -14,8 +14,8 @@ test("state machine with a sequence of Pass states", () => {
     const stateMachine = new StateMachine();
     stateMachine.addChildState(passState1)
     stateMachine.addChildState(passState2)
-    stateMachine.startState = passState1
-    passState1.next = passState2;
+    stateMachine.startState = passState1.name
+    passState1.next = passState2.name
 
     expect(stateMachine.toAsl()).toStrictEqual(
         JSON.parse(`
@@ -53,7 +53,7 @@ test("state machine with a optional top-level field", () => {
     const stateMachine = new StateMachine();
     stateMachine.comment = "This is a test";
     stateMachine.addChildState(passState)
-    stateMachine.startState = passState
+    stateMachine.startState = passState.name
 
     expect(stateMachine.toAsl()).toStrictEqual(
         JSON.parse(`
@@ -111,13 +111,6 @@ test("custom state names can be set and will be returned next", () => {
     expect(state1).toBe("State0001");
     expect(myState).toBe("MyCustomStateName");
     expect(state2).toBe("State0002");
-})
-
-test("custom state names that look like auto-generated names are invalid", () => {
-    const stateMachine = new StateMachine();
-    expect(() => {
-        stateMachine.nextStateName = "State1234";
-    }).toThrow(new InvalidName("Custom state name State1234 can not be used"))
 })
 
 test("state machine with no states is illegal", () => {

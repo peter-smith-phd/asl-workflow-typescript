@@ -12,7 +12,7 @@ test("PassState stores optional fields", () => {
     const passState = new PassState("stateName");
     passState.output = [1, 2, 3];
     passState.assign = {"var1": "hello"}
-    passState.next = new PassState("secondState");
+    passState.next = "secondState";
 
     expect(passState.name).toEqual("stateName");
     expect(passState.type).toEqual("Pass");
@@ -20,14 +20,14 @@ test("PassState stores optional fields", () => {
     expect(passState.assign).toStrictEqual({"var1": "hello"});
 
     expect(passState.end).toBeFalsy();
-    expect(passState.next.name).toEqual("secondState");
+    expect(passState.next).toEqual("secondState");
 })
 
 test("PassState serializes to ASL correctly (with next state)", () => {
     const passState = new PassState("stateName");
     passState.output = {"a": true, b: [5, 6, 7]}
     passState.assign = {"var2": "goodbye"}
-    passState.next = new PassState("secondState");
+    passState.next = "secondState";
 
     expect(passState.toAsl()).toStrictEqual(
         JSON.parse(`

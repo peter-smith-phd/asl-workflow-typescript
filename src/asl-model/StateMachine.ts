@@ -6,7 +6,7 @@ import {isValidStateName} from "./utils";
 export default class StateMachine extends AslNode {
 
     /** The state machine's initial state */
-    private _startState?: AslState;
+    private _startState?: string;
 
     /** the child states, in the order they were added */
     private _states: AslState[] = [];
@@ -18,13 +18,13 @@ export default class StateMachine extends AslNode {
     private _customStateName?: string = undefined;
 
     /** @returns the state machine's start state */
-    public get startState(): AslState | undefined{
+    public get startState(): string | undefined {
         return this._startState;
     }
 
-    /** @param value the state machine's start state. */
-    public set startState(value: AslState) {
-        this._startState = value;
+    /** @param stateName the state machine's start state. */
+    public set startState(stateName: string) {
+        this._startState = stateName;
     }
 
     /**
@@ -79,21 +79,21 @@ export default class StateMachine extends AslNode {
     }
 
     /**
-     * Set a custom state name to be returned as if it was an auto-generated name. This
-     * is useful when a "label" operation is used to give a meaningful name for a state machine
-     * name.
-     * @param customStateName The next state name to use.
-     * @throws AlreadyExistsError if the state name has already been used in this state machine.
+     * Set a state name to be returned as the next auto-generated name. This is useful when a "label" operation
+     * is used to give a meaningful name for a state machine name. It's also used for if-then-else statements (etc)
+     * where state names must be generated first, then assigned to a state at a much later time.
+     *
+     * @param stateName The next state name to use.
      * @throws InvalidName if the name contains invalid characters, or looks like an auto-generated name.
      */
-    public set nextStateName(customStateName: string) {
+    public set nextStateName(stateName: string) {
         if (this._customStateName) {
             throw new TooManyError("A custom state name has already been provided, but not yet used");
         }
-        if (!isValidStateName(customStateName) || /^State\d\d\d\d$/.test(customStateName)) {
-            throw new InvalidName(`Custom state name ${customStateName} can not be used`);
+        if (!isValidStateName(stateName)) {
+            throw new InvalidName(`State name ${stateName} is not legal`);
         }
-        this._customStateName = customStateName;
+        this._customStateName = stateName;
     }
 
     /**
@@ -110,7 +110,7 @@ export default class StateMachine extends AslNode {
         const asl: { [key: string]: any } = {
             "Version": "1.0",
             "QueryLanguage": "JSONata",
-            "StartAt": this._startState.name
+            "StartAt": this._startState
         }
         if (this.comment) {
             asl["Comment"] = this.comment;

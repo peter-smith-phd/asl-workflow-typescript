@@ -16,8 +16,14 @@ export default abstract class AslState extends AslNode {
     /* if true, this is an end state with no successor. If false, the _next refers to the next state */
     private _end: boolean = true;
 
-    /* the next state (valid only if end is false) */
-    protected _next: AslState | undefined = undefined;
+    /* the next state's name (valid only if end is false) */
+    protected _next?: string = undefined;
+
+    /** Content of the "Output" field */
+    private _output: any | undefined = undefined;
+
+    /** Variable assignments for the "Assign" field */
+    private _assign: { [key: string]: any } | undefined = undefined;
 
     /**
      * Constructor for the abstract base class for all ASL state types.
@@ -54,14 +60,37 @@ export default abstract class AslState extends AslNode {
         }
     }
 
-    /** @returns This state's successor state */
-    get next(): AslState | undefined {
+    /** @returns The name of this state's successor state */
+    get next(): string | undefined {
+        // TODO: or string
         return this._next;
     }
 
-    /** @param value A reference to this state's successor state */
-    set next(value: AslState) {
-        this._next = value;
+    /**
+     * @param stateName
+     */
+    set next(stateName: string) {
+        this._next = stateName;
         this._end = false;
+    }
+
+    /** @returns The Output of the Pass state (any valid JSON type) */
+    get output(): any {
+        return this._output;
+    }
+
+    /** @param value The new value of the "Output" field */
+    set output(value: any) {
+        this._output = value;
+    }
+
+    /** @returns The "Assign" field of the Pass state */
+    get assign(): { [p: string]: any } | undefined {
+        return this._assign;
+    }
+
+    /** @param value The new value of the "Assign" field (must be an object with variable name keys) */
+    set assign(value: { [p: string]: any }) {
+        this._assign = value;
     }
 }
