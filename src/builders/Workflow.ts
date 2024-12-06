@@ -2,11 +2,10 @@ import {WorkflowIf} from "./WorkflowIf";
 import {WorkflowRetryCatch} from "./WorkflowRetryCatch";
 import StateMachine from "../asl-model/StateMachine";
 import PassState from "../asl-model/PassState";
-import AslState from "../asl-model/AslState";
 import {isValidVariableName} from "../asl-model/utils";
 import {InvalidName} from "../asl-model/errors";
 
-type ConstantOrJsonata = number | string | boolean | object | any[] ;
+type ConstantOrJsonata = number | string | boolean | object | null | any[] ;
 type StringOrJsonata = string;
 
 export class Workflow {
@@ -23,11 +22,13 @@ export class Workflow {
         const passState = new PassState(this.stateMachine.nextStateName)
         passState.assign = {}
         passState.assign[varName] = constOrJsonata
-        this.chainStateAtEnd(passState)
+        this.stateMachine.chainStateAtEnd(passState)
     }
 
-    public if(jsonataExpression: string | boolean): WorkflowIf {
-        return new WorkflowIf();
+    public if(jsonataExpression: string): WorkflowIf {
+        const falseLabel = this.stateMachine.nextStateName
+        const endLabel = this.stateMachine.nextStateName
+        return new WorkflowIf(this.stateMachine, jsonataExpression, falseLabel, endLabel);
     }
 
     public parallel(input: ConstantOrJsonata, branches: ((w: Workflow) => void)[]): WorkflowRetryCatch {
@@ -76,24 +77,13 @@ export class Workflow {
         const passState = new PassState(this.stateMachine.nextStateName)
         passState.output = {}
         passState.output = value
-        this.chainStateAtEnd(passState)
+        this.stateMachine.chainStateAtEnd(passState)
     }
 
-    /**
-     * Helper for adding a new state to the state machine, then appending it to the end of
-     * the current flow.
-     *
-     * @param state New state to be appended to the end.
-     */
-    private chainStateAtEnd(state: AslState) {
-        const lastState = this.stateMachine.getLastState();
-        this.stateMachine.addChildState(state)
-        if (lastState === undefined) {
-            this.stateMachine.startState = state;
-        } else {
-            lastState.next = state;
-        }
+    public label(stateName: string) {
+        // TODO: validate that the label doesn't look like an auto-generated name.
     }
+
     // TODO: label
     // TODO: while/break/continue
     // TODO: switch

@@ -97,6 +97,36 @@ export default class StateMachine extends AslNode {
     }
 
     /**
+     * @return true if there's a custom state name set, which hasn't yet been used.
+     */
+    public hasUnusedCustomStateName(): boolean {
+        return this._customStateName != undefined;
+    }
+
+    /**
+     * Helper for adding a new state to the state machine, then appending it to the end of
+     * the current flow.
+     *
+     * @param state New state to be appended to the end.
+     */
+    public chainStateAtEnd(state: AslState) {
+        const lastState = this.getLastState();
+        this.addChildState(state)
+        if (lastState === undefined) {
+            this.startState = state.name;
+        } else {
+            lastState.next = state.name;
+        }
+    }
+
+    /**
+     * Return the number of states in the state machine.
+     */
+    public size(): number {
+        return this._states.length
+    }
+
+    /**
      * Output this state machine's ASL, complete with top-level states
      * and the ASL for all child states (deeply recursive).
      *
